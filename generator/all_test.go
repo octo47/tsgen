@@ -1,4 +1,4 @@
-package tsgen
+package generator
 
 import (
 	"testing"
