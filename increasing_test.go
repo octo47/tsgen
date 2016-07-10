@@ -2,13 +2,9 @@ package tsgen
 
 import (
 	"math/rand"
-	"testing"
 
 	. "gopkg.in/check.v1"
 )
-
-// Hook up gocheck into the "go test" runner.
-func TestIncreasing(t *testing.T) { TestingT(t) }
 
 type IncreasingTimeSeriesSuite struct {
 	tags []Tag

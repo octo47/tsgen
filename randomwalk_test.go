@@ -3,13 +3,9 @@ package tsgen
 import (
 	"math"
 	"math/rand"
-	"testing"
 
 	. "gopkg.in/check.v1"
 )
-
-// Hook up gocheck into the "go test" runner.
-func TestRandomWalk(t *testing.T) { TestingT(t) }
 
 type RandomWalkTimeSeriesSuite struct {
 	tags []Tag
