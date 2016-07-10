@@ -2,17 +2,17 @@ package generator
 
 import "math/rand"
 
-// RandomWalkTimeSeries implements random walk.
-type RandomWalkTimeSeries struct {
+// RandomWalkGenerator implements random walk.
+type RandomWalkGenerator struct {
 	rnd  *rand.Rand
 	last Point
 }
 
-func NewRandomWalkTimeSeries(r *rand.Rand) *RandomWalkTimeSeries {
-	return &RandomWalkTimeSeries{rnd: r}
+func NewRandomWalkGenerator(r *rand.Rand) *RandomWalkGenerator {
+	return &RandomWalkGenerator{rnd: r}
 }
 
-func (rw *RandomWalkTimeSeries) Next(points *[]Point) {
+func (rw *RandomWalkGenerator) Next(points *[]Point) {
 	for i := range *points {
 		rvalue := rw.rnd.Float64()
 		coeff := float64(1)

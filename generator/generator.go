@@ -1,6 +1,6 @@
 package generator
 
-type TimeSeries interface {
+type Generator interface {
 	// fill slice with generated points
 	Next(points *[]Point)
 }

@@ -5,18 +5,18 @@ import (
 	"math/rand"
 )
 
-// CyclicTimeSeries implements random walk.
-type CyclicTimeSeries struct {
+// CyclicGenerator implements random walk.
+type CyclicGenerator struct {
 	rnd     *rand.Rand
 	last    Point
 	degrees float64
 }
 
-func NewCyclicTimeSeries(r *rand.Rand) *CyclicTimeSeries {
-	return &CyclicTimeSeries{rnd: r}
+func NewCyclicGenerator(r *rand.Rand) *CyclicGenerator {
+	return &CyclicGenerator{rnd: r}
 }
 
-func (rw *CyclicTimeSeries) Next(points *[]Point) {
+func (rw *CyclicGenerator) Next(points *[]Point) {
 	for i := range *points {
 		rval := rw.rnd.Float64()
 		rw.last.Value += rval * math.Sin(rw.degrees*math.Pi/288) / 20

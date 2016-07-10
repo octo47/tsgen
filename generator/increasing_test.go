@@ -6,14 +6,14 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type IncreasingTimeSeriesSuite struct {
+type IncreasingGeneratorSuite struct {
 }
 
-var _ = Suite(&IncreasingTimeSeriesSuite{})
+var _ = Suite(&IncreasingGeneratorSuite{})
 
-func (s *IncreasingTimeSeriesSuite) TestIncreasing(c *C) {
+func (s *IncreasingGeneratorSuite) TestIncreasing(c *C) {
 	rnd := rand.New(rand.NewSource(1))
-	rw := NewIncreasingTimeSeries(rnd)
+	rw := NewIncreasingGenerator(rnd)
 	points := make([]Point, 10)
 	rw.Next(&points)
 	for i := 0; i < len(points)-2; i++ {

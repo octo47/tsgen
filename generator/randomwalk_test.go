@@ -7,14 +7,14 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type RandomWalkTimeSeriesSuite struct {
+type RandomWalkGeneratorSuite struct {
 }
 
-var _ = Suite(&RandomWalkTimeSeriesSuite{})
+var _ = Suite(&RandomWalkGeneratorSuite{})
 
-func (s *RandomWalkTimeSeriesSuite) TestRandomWalk(c *C) {
+func (s *RandomWalkGeneratorSuite) TestRandomWalk(c *C) {
 	rnd := rand.New(rand.NewSource(1))
-	rw := NewRandomWalkTimeSeries(rnd)
+	rw := NewRandomWalkGenerator(rnd)
 	points := make([]Point, 10)
 	rw.Next(&points)
 	for i := 0; i < len(points)-2; i++ {

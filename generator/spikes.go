@@ -5,17 +5,17 @@ import (
 	"math/rand"
 )
 
-// SpikesTimeSeries implements random walk.
-type SpikesTimeSeries struct {
+// SpikesGenerator implements random walk.
+type SpikesGenerator struct {
 	rnd  *rand.Rand
 	last Point
 }
 
-func NewSpikesTimeSeries(r *rand.Rand) *SpikesTimeSeries {
-	return &SpikesTimeSeries{rnd: r}
+func NewSpikesGenerator(r *rand.Rand) *SpikesGenerator {
+	return &SpikesGenerator{rnd: r}
 }
 
-func (rw *SpikesTimeSeries) Next(points *[]Point) {
+func (rw *SpikesGenerator) Next(points *[]Point) {
 	for i := range *points {
 		rw.last.Value = math.Ceil(math.Tan(rw.rnd.Float64()*math.Pi/2)) / 100
 		(*points)[i] = rw.last

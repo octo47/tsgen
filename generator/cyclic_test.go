@@ -6,14 +6,14 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type CyclicTimeSeriesSuite struct {
+type CyclicGeneratorSuite struct {
 }
 
-var _ = Suite(&CyclicTimeSeriesSuite{})
+var _ = Suite(&CyclicGeneratorSuite{})
 
-func (s *CyclicTimeSeriesSuite) TestCyclic(c *C) {
+func (s *CyclicGeneratorSuite) TestCyclic(c *C) {
 	rnd := rand.New(rand.NewSource(1))
-	rw := NewCyclicTimeSeries(rnd)
+	rw := NewCyclicGenerator(rnd)
 	points := make([]Point, 361)
 	rw.Next(&points)
 }
