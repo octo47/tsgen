@@ -4,17 +4,12 @@ import "math/rand"
 
 // RandomWalkTimeSeries implements random walk.
 type RandomWalkTimeSeries struct {
+	Generator
 	last Point
-	tags []Tag
-	rnd  *rand.Rand
 }
 
 func NewRandomWalkTimeSeries(r *rand.Rand, tags []Tag) *RandomWalkTimeSeries {
-	return &RandomWalkTimeSeries{rnd: r, tags: tags}
-}
-
-func (rw *RandomWalkTimeSeries) Tags() []Tag {
-	return rw.tags
+	return &RandomWalkTimeSeries{Generator{rnd: r, tags: tags}, Point{}}
 }
 
 func (rw *RandomWalkTimeSeries) Next(points *[]Point) {
