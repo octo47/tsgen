@@ -1,4 +1,4 @@
-package tsgen
+package generator
 
 import (
 	"math"
@@ -7,12 +7,12 @@ import (
 
 // SpikesTimeSeries implements random walk.
 type SpikesTimeSeries struct {
-	Generator
+	rnd  *rand.Rand
 	last Point
 }
 
-func NewSpikesTimeSeries(r *rand.Rand, tags []Tag) *SpikesTimeSeries {
-	return &SpikesTimeSeries{Generator{rnd: r, tags: tags}, Point{}}
+func NewSpikesTimeSeries(r *rand.Rand) *SpikesTimeSeries {
+	return &SpikesTimeSeries{rnd: r}
 }
 
 func (rw *SpikesTimeSeries) Next(points *[]Point) {

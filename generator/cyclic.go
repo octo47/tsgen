@@ -1,4 +1,4 @@
-package tsgen
+package generator
 
 import (
 	"math"
@@ -7,13 +7,13 @@ import (
 
 // CyclicTimeSeries implements random walk.
 type CyclicTimeSeries struct {
-	Generator
+	rnd     *rand.Rand
 	last    Point
 	degrees float64
 }
 
-func NewCyclicTimeSeries(r *rand.Rand, tags []Tag) *CyclicTimeSeries {
-	return &CyclicTimeSeries{Generator{rnd: r, tags: tags}, Point{}, 0}
+func NewCyclicTimeSeries(r *rand.Rand) *CyclicTimeSeries {
+	return &CyclicTimeSeries{rnd: r}
 }
 
 func (rw *CyclicTimeSeries) Next(points *[]Point) {

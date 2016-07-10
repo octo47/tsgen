@@ -1,4 +1,4 @@
-package tsgen
+package generator
 
 import (
 	"math/rand"
@@ -7,17 +7,13 @@ import (
 )
 
 type IncreasingTimeSeriesSuite struct {
-	tags []Tag
 }
 
-var _ = Suite(&IncreasingTimeSeriesSuite{
-	tags: []Tag{Tag{"tag1", "value1"}},
-})
+var _ = Suite(&IncreasingTimeSeriesSuite{})
 
 func (s *IncreasingTimeSeriesSuite) TestIncreasing(c *C) {
 	rnd := rand.New(rand.NewSource(1))
-	rw := NewIncreasingTimeSeries(rnd, s.tags)
-	c.Assert(rw.Tags(), DeepEquals, s.tags)
+	rw := NewIncreasingTimeSeries(rnd)
 	points := make([]Point, 10)
 	rw.Next(&points)
 	for i := 0; i < len(points)-2; i++ {

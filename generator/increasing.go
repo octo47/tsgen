@@ -1,15 +1,15 @@
-package tsgen
+package generator
 
 import "math/rand"
 
 // IncreasingTimeSeries implements random walk.
 type IncreasingTimeSeries struct {
-	Generator
+	rnd  *rand.Rand
 	last Point
 }
 
-func NewIncreasingTimeSeries(r *rand.Rand, tags []Tag) *IncreasingTimeSeries {
-	return &IncreasingTimeSeries{Generator{rnd: r, tags: tags}, Point{}}
+func NewIncreasingTimeSeries(r *rand.Rand) *IncreasingTimeSeries {
+	return &IncreasingTimeSeries{rnd: r}
 }
 
 func (rw *IncreasingTimeSeries) Next(points *[]Point) {

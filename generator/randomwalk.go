@@ -1,15 +1,15 @@
-package tsgen
+package generator
 
 import "math/rand"
 
 // RandomWalkTimeSeries implements random walk.
 type RandomWalkTimeSeries struct {
-	Generator
+	rnd  *rand.Rand
 	last Point
 }
 
-func NewRandomWalkTimeSeries(r *rand.Rand, tags []Tag) *RandomWalkTimeSeries {
-	return &RandomWalkTimeSeries{Generator{rnd: r, tags: tags}, Point{}}
+func NewRandomWalkTimeSeries(r *rand.Rand) *RandomWalkTimeSeries {
+	return &RandomWalkTimeSeries{rnd: r}
 }
 
 func (rw *RandomWalkTimeSeries) Next(points *[]Point) {
