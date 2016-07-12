@@ -6,8 +6,8 @@ type ScalingGenerator struct {
 	scale float64
 }
 
-func NewScalingGenerator(inner Generator, scale *float64) *ScalingGenerator {
-	return &ScalingGenerator{inner: inner}
+func NewScalingGenerator(inner Generator, scale float64) *ScalingGenerator {
+	return &ScalingGenerator{inner: inner, scale: scale}
 }
 
 func (rw *ScalingGenerator) Next(points *[]Point) {

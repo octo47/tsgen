@@ -21,13 +21,7 @@ var _ = Suite(&SimulatorSuite{
 
 func (s *SimulatorSuite) TestSimulatorTick(c *C) {
 	rnd := rand.New(rand.NewSource(1))
-	conf := Configuration{
-		Machines:   3,
-		Clusters:   2,
-		GlobalTags: 4,
-		UniqueTags: 3,
-		StartSplay: 300,
-	}
+	conf := NewConfiguration(3, 5)
 	simulator := NewSimulator(rnd, conf, 0)
 	c.Assert(len(simulator.machines), Equals, 3)
 	glog.Info(simulator.machines)

@@ -18,6 +18,7 @@ type Tags []Tag
 
 // TimeSeries keeps track on timestamps and operate on generator to create new points.
 type TimeSeries struct {
+	ns     string
 	name   string
 	tags   Tags
 	lastTs uint64
@@ -27,6 +28,7 @@ type TimeSeries struct {
 
 // TaggedPoints structure hold points with attached Tags
 type TaggedPoints struct {
+	ns     *string
 	name   *string
 	tags   *Tags
 	points *[]generator.Point
@@ -46,16 +48,16 @@ func NewMachine(name string, tags Tags, initialTs uint64) *Machine {
 }
 
 // AddTimeseries adds timeseries with generator and period.
-func (m *Machine) AddTimeseries(name string, gen generator.Generator, period uint64) {
+func (m *Machine) AddTimeseries(ns string, name string, gen generator.Generator, period uint64) {
 	m.timeseries = append(m.timeseries,
-		TimeSeries{name: name, tags: m.tags, lastTs: m.lastTs, period: period, gen: gen})
+		TimeSeries{ns: ns, name: name, tags: m.tags, lastTs: m.lastTs, period: period, gen: gen})
 }
 
 // AddTimeseriesWithTags adds timeseries with series specific tags with generator and period.
 func (m *Machine) AddTimeseriesWithTags(
-	name string, tags Tags, gen generator.Generator, period uint64) {
+	ns string, name string, tags Tags, gen generator.Generator, period uint64) {
 	m.timeseries = append(m.timeseries,
-		TimeSeries{name: name, tags: append(tags, m.tags...), lastTs: m.lastTs, period: period, gen: gen})
+		TimeSeries{ns: ns, name: name, tags: append(tags, m.tags...), lastTs: m.lastTs, period: period, gen: gen})
 }
 
 // Tick advance time for machine. Machine generates all metrics up to provided timestamp.
@@ -78,7 +80,7 @@ func (ts *TimeSeries) Tick(timestamp uint64) TaggedPoints {
 		glog.Info(" timeseries: ", ts.name, " ", ts.lastTs, " -> ", timestamp, " ", count)
 	}
 	if count < 1 {
-		return TaggedPoints{&ts.name, &ts.tags, nil}
+		return TaggedPoints{&ts.ns, &ts.name, &ts.tags, nil}
 	}
 	buffer := make([]generator.Point, count)
 	ts.gen.Next(&buffer)
@@ -92,7 +94,7 @@ func (ts *TimeSeries) Tick(timestamp uint64) TaggedPoints {
 		glog.Info("generated ", ts.name, " tick, ts=", timestamp, " points=", len(buffer),
 			" timesries=", ts)
 	}
-	return TaggedPoints{&ts.name, &ts.tags, &buffer}
+	return TaggedPoints{&ts.ns, &ts.name, &ts.tags, &buffer}
 }
 
 func (tags *Tags) Len() int {

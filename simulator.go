@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
+	"github.com/octo47/tsgen/generator"
 )
 
 // Simulator keeps state of simulation.
@@ -31,19 +32,47 @@ type Configuration struct {
 	UniqueTags int
 	// minimun tags
 	MinimumTags int
+	// Total metrics
+	MetricsTotal int
+	// Set of base metrics that reported by all machines
+	BaseMetrics int
+	// Maximum metrics per machine
+	MaxMetrics int
+	// Metrics per namespace
+	MetricsPerNamespace int
+	// Tags per metric
+	TagsPerMetric int
 	// StartSplay configures how far machines start time could drift away from startTime
 	StartSplay int
 }
 
+func NewConfiguration(machines int, metrics int) Configuration {
+	return Configuration{
+		Machines:            machines,
+		Clusters:            machines/256 + 1,
+		GlobalTags:          8,
+		UniqueTags:          machines * 10,
+		MinimumTags:         4,
+		MetricsTotal:        machines * 300,
+		BaseMetrics:         metrics/10 + 1,
+		MaxMetrics:          metrics,
+		MetricsPerNamespace: metrics/30 + 2,
+		TagsPerMetric:       3,
+		StartSplay:          300,
+	}
+}
+
 type clusterDef struct {
-	cID  int
-	tags tagsDef
+	cID     int
+	tags    tagsDef
+	metrics []metricDef
 }
 
 func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulator {
 	clusters := generateClusters(rnd, conf)
 	clusterGen := rand.NewZipf(rnd, 1.2, 1.1, uint64(conf.Clusters-1))
 	globalTags := NewTagsDef(rnd, conf.GlobalTags, conf.GlobalTags)
+	metrics := generateMetrics(rnd, conf)
 	machines := make([]*Machine, conf.Machines)
 	for machine := 0; machine < conf.Machines; machine++ {
 		var tags Tags
@@ -56,6 +85,27 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 		if glog.V(1) {
 			glog.Info("Machine ", machineName, " cluster=", clusterIdx,
 				" tags=", tags)
+		}
+		for metric := 0; metric < conf.BaseMetrics; metric++ {
+			machines[machine].AddTimeseriesWithTags(
+				metrics[metric].namespace,
+				metrics[metric].name,
+				metrics[metric].tags.selectTags(conf.TagsPerMetric),
+				metrics[metric].genMaker(),
+				metrics[metric].period)
+		}
+		metricsCount := rnd.Intn(conf.MaxMetrics - conf.BaseMetrics)
+		metricsSelected := make(map[int]bool)
+		for i := 0; i < metricsCount; i++ {
+			metricsSelected[rnd.Intn(conf.MaxMetrics-conf.BaseMetrics)+conf.BaseMetrics] = true
+		}
+		for metric := range metricsSelected {
+			machines[machine].AddTimeseriesWithTags(
+				metrics[metric].namespace,
+				metrics[metric].name,
+				metrics[metric].tags.selectTags(conf.TagsPerMetric),
+				metrics[metric].genMaker(),
+				metrics[metric].period)
 		}
 	}
 	return &Simulator{conf, startTime, machines, globalTags}
@@ -74,6 +124,14 @@ type tagsDef struct {
 	tags              Tags
 	tagDistribution   *rand.Zipf
 	countDistribution *rand.Zipf
+}
+
+type metricDef struct {
+	namespace string
+	name      string
+	period    uint64
+	tags      tagsDef
+	genMaker  func() generator.Generator
 }
 
 func NewTagsDef(rnd *rand.Rand, maxTags int, maxCount int) tagsDef {
@@ -154,4 +212,37 @@ func deduplicateTags(tags *Tags) {
 		}
 	}
 	tags = &newTags
+}
+
+func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
+	count := conf.MaxMetrics
+	periodDF := rand.NewZipf(rnd, 1.1, 1.2, 19)
+	namespaces := count/conf.MetricsPerNamespace + 1
+	metrics := make([]metricDef, count)
+	for i := 0; i < count; i++ {
+		genNum := rnd.Intn(10) // make randomwalk more frequent
+		scale := float64(rnd.Intn(1e6)) * 0.001
+		ns := rnd.Intn(namespaces)
+		metrics[i].namespace = genName("ns", ns)
+		metrics[i].name = genName("metric.", i)
+		metrics[i].period = uint64(15 * (int(periodDF.Uint64()) + 1))
+		metrics[i].tags = NewTagsDef(rnd, conf.TagsPerMetric, conf.TagsPerMetric)
+		metrics[i].genMaker = func() generator.Generator {
+			genNum := genNum
+			scale := scale
+			var gen generator.Generator
+			switch genNum {
+			case 4:
+				gen = generator.NewIncreasingGenerator(rnd)
+			case 1:
+				gen = generator.NewSpikesGenerator(rnd)
+			case 3:
+				gen = generator.NewCyclicGenerator(rnd)
+			default:
+				gen = generator.NewRandomWalkGenerator(rnd)
+			}
+			return generator.NewScalingGenerator(gen, scale)
+		}
+	}
+	return metrics
 }
