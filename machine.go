@@ -1,6 +1,7 @@
 package tsgen
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/golang/glog"
@@ -67,20 +68,29 @@ func (m *Machine) Tick(timestamp uint64) *[]TaggedPoints {
 		glog.Info(" machine ", m.name, " ", m.lastTs, " -> ", timestamp)
 	}
 	tpoints := make([]TaggedPoints, len(m.timeseries))
+	okIndex := 0
 	for tsidx := range m.timeseries {
-		tpoints[tsidx] = m.timeseries[tsidx].Tick(timestamp)
+		points, ok := m.timeseries[tsidx].Tick(timestamp)
+		if ok {
+			tpoints[okIndex] = *points
+			okIndex++
+		}
 	}
-	return &tpoints
+	result := tpoints[0:okIndex]
+	return &result
 }
 
 // Tick advaces single timeseries to timestamp, generating points in between last timestamp and new
-func (ts *TimeSeries) Tick(timestamp uint64) TaggedPoints {
-	count := (timestamp - ts.lastTs) / ts.period
+func (ts *TimeSeries) Tick(timestamp uint64) (*TaggedPoints, bool) {
+	count := uint64(0)
+	if timestamp > ts.lastTs {
+		count = (timestamp - ts.lastTs) / ts.period
+	}
 	if glog.V(2) {
 		glog.Info(" timeseries: ", ts.name, " ", ts.lastTs, " -> ", timestamp, " ", count)
 	}
 	if count < 1 {
-		return TaggedPoints{&ts.ns, &ts.name, &ts.tags, nil}
+		return nil, false
 	}
 	buffer := make([]generator.Point, count)
 	ts.gen.Next(&buffer)
@@ -94,7 +104,7 @@ func (ts *TimeSeries) Tick(timestamp uint64) TaggedPoints {
 		glog.Info("generated ", ts.name, " tick, ts=", timestamp, " points=", len(buffer),
 			" timesries=", ts)
 	}
-	return TaggedPoints{&ts.ns, &ts.name, &ts.tags, &buffer}
+	return &TaggedPoints{&ts.ns, &ts.name, &ts.tags, &buffer}, true
 }
 
 func (tags *Tags) Len() int {
@@ -112,4 +122,20 @@ func (tags *Tags) Less(i int, j int) bool {
 
 func (tags *Tags) Swap(i int, j int) {
 	(*tags)[i], (*tags)[j] = (*tags)[j], (*tags)[i]
+}
+
+func (tags *Tags) FormatCommaSeparated() string {
+	var buf bytes.Buffer
+	sep := false
+	for i := range *tags {
+		if sep {
+			buf.WriteRune(',')
+		} else {
+			sep = true
+		}
+		buf.WriteString((*tags)[i].Name)
+		buf.WriteRune('=')
+		buf.WriteString((*tags)[i].Value)
+	}
+	return buf.String()
 }

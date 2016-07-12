@@ -1,6 +1,9 @@
 package generator
 
-import "math/rand"
+import (
+	"math"
+	"math/rand"
+)
 
 // IncreasingGenerator implements random walk.
 type IncreasingGenerator struct {
@@ -14,7 +17,7 @@ func NewIncreasingGenerator(r *rand.Rand) *IncreasingGenerator {
 
 func (rw *IncreasingGenerator) Next(points *[]Point) {
 	for i := range *points {
-		rw.last.Value += rw.rnd.Float64()
+		rw.last.Value += math.Abs(rw.rnd.Float64())
 		(*points)[i] = rw.last
 	}
 }

@@ -84,14 +84,15 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 			startTime+uint64(rnd.Intn(conf.StartSplay)))
 		if glog.V(1) {
 			glog.Info("Machine ", machineName, " cluster=", clusterIdx,
-				" tags=", tags)
+				" tags=", tags, " startTime=", machines[machine].lastTs)
 		}
 		for metric := 0; metric < conf.BaseMetrics; metric++ {
+			gen, name := metrics[metric].genMaker()
 			machines[machine].AddTimeseriesWithTags(
 				metrics[metric].namespace,
-				metrics[metric].name,
+				name,
 				metrics[metric].tags.selectTags(conf.TagsPerMetric),
-				metrics[metric].genMaker(),
+				gen,
 				metrics[metric].period)
 		}
 		metricsCount := rnd.Intn(conf.MaxMetrics - conf.BaseMetrics)
@@ -100,11 +101,12 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 			metricsSelected[rnd.Intn(conf.MaxMetrics-conf.BaseMetrics)+conf.BaseMetrics] = true
 		}
 		for metric := range metricsSelected {
+			gen, name := metrics[metric].genMaker()
 			machines[machine].AddTimeseriesWithTags(
 				metrics[metric].namespace,
-				metrics[metric].name,
+				name,
 				metrics[metric].tags.selectTags(conf.TagsPerMetric),
-				metrics[metric].genMaker(),
+				gen,
 				metrics[metric].period)
 		}
 	}
@@ -115,8 +117,11 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 // Callback will get tagged points usable to be sent to monitoring systems
 func (s *Simulator) Run(shard int, shardCount int, runFor uint64, cb func(points *[]TaggedPoints)) {
 	s.currentTime += runFor
-	for i := 0; i < len(s.machines); i += shardCount {
-		cb(s.machines[i+shard].Tick(s.currentTime))
+	for i := shard; i < len(s.machines); i += shardCount {
+		tick := s.machines[i].Tick(s.currentTime)
+		if len(*tick) > 0 {
+			cb(tick)
+		}
 	}
 }
 
@@ -128,10 +133,9 @@ type tagsDef struct {
 
 type metricDef struct {
 	namespace string
-	name      string
 	period    uint64
 	tags      tagsDef
-	genMaker  func() generator.Generator
+	genMaker  func() (generator.Generator, string)
 }
 
 func NewTagsDef(rnd *rand.Rand, maxTags int, maxCount int) tagsDef {
@@ -189,8 +193,8 @@ func generateTags(rnd *rand.Rand, numTags int) Tags {
 	tagsGen := rand.NewZipf(rnd, 1.2, 1.1, uint64(numTags-1))
 	valuesGen := rand.NewZipf(rnd, 1.1, 1.1, uint64(numTags-1))
 	for tagIdx := 0; tagIdx < numTags; tagIdx++ {
-		tagName := genOrCache(&tagsCache, "tag-", tagsGen.Uint64())
-		value := genOrCache(&valuesCache, "value-", valuesGen.Uint64())
+		tagName := genOrCache(&tagsCache, "tag", tagsGen.Uint64())
+		value := genOrCache(&valuesCache, "value", valuesGen.Uint64())
 		tags[tagIdx] = Tag{tagName, value}
 	}
 	sort.Sort(&tags)
@@ -224,24 +228,28 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 		scale := float64(rnd.Intn(1e6)) * 0.001
 		ns := rnd.Intn(namespaces)
 		metrics[i].namespace = genName("ns", ns)
-		metrics[i].name = genName("metric.", i)
 		metrics[i].period = uint64(15 * (int(periodDF.Uint64()) + 1))
 		metrics[i].tags = NewTagsDef(rnd, conf.TagsPerMetric, conf.TagsPerMetric)
-		metrics[i].genMaker = func() generator.Generator {
+		metrics[i].genMaker = func() (generator.Generator, string) {
 			genNum := genNum
 			scale := scale
 			var gen generator.Generator
+			var metricPrefix string
 			switch genNum {
 			case 4:
 				gen = generator.NewIncreasingGenerator(rnd)
+				metricPrefix = "metricI"
 			case 1:
 				gen = generator.NewSpikesGenerator(rnd)
+				metricPrefix = "metricS"
 			case 3:
 				gen = generator.NewCyclicGenerator(rnd)
+				metricPrefix = "metricC"
 			default:
-				gen = generator.NewRandomWalkGenerator(rnd)
+				gen = generator.NewRandomWalkGeneratorPositive(rnd)
+				metricPrefix = "metricR"
 			}
-			return generator.NewScalingGenerator(gen, scale)
+			return generator.NewScalingGenerator(gen, scale), genName(metricPrefix, i)
 		}
 	}
 	return metrics

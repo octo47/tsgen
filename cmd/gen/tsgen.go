@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -20,6 +21,7 @@ var metrics = flag.Int("metrics", 1000, "metrics at total to simulate")
 var pollPeriod = flag.Uint64("poll", 300, "simulated metrics publish period")
 
 func main() {
+	flag.Parse()
 	var wg sync.WaitGroup
 	exit := int32(0)
 	rnd := rand.New(rand.NewSource(*seed))
@@ -40,10 +42,15 @@ func main() {
 			for atomic.LoadInt32(&exit) != 1 {
 				sim.Run(shard, *parallel, *pollPeriod, func(tp *[]tsgen.TaggedPoints) {
 					for i := range *tp {
-						fmt.Println(i)
-						//for _, point := range (*tp)[i].points {
-						//	fmt.Println(point.Timestamp)
-						//}
+						tagstr := (*tp)[i].Tags.FormatCommaSeparated()
+						for _, point := range *(*tp)[i].Datapoints {
+							var fullMetricName bytes.Buffer
+							fullMetricName.WriteString(*(*tp)[i].Namespace)
+							fullMetricName.WriteRune('.')
+							fullMetricName.WriteString(*(*tp)[i].MetricName)
+							fmt.Println(fullMetricName.String(),
+								tagstr, point.Timestamp, point.Value)
+						}
 					}
 				})
 			}

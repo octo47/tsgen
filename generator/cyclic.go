@@ -9,6 +9,7 @@ import (
 type CyclicGenerator struct {
 	rnd     *rand.Rand
 	last    Point
+	bias    float64
 	degrees float64
 }
 
