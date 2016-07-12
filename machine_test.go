@@ -30,14 +30,14 @@ func (s *MachineSuite) TestMachineTick(c *C) {
 		result := machine.Tick(timestamp)
 		c.Assert(len(*result), Equals, 5)
 		for _, taggedPoints := range *result {
-			switch *taggedPoints.name {
+			switch *taggedPoints.MetricName {
 			case "requests":
-				c.Assert(len(*taggedPoints.points), Equals, 300/15)
-				c.Assert(int((*taggedPoints.points)[1].Timestamp-(*taggedPoints.points)[0].Timestamp),
+				c.Assert(len(*taggedPoints.Datapoints), Equals, 300/15)
+				c.Assert(int((*taggedPoints.Datapoints)[1].Timestamp-(*taggedPoints.Datapoints)[0].Timestamp),
 					Equals, 15)
 			case "disk.usage":
-				c.Assert(len(*taggedPoints.points), Equals, 300/60)
-				c.Assert(int((*taggedPoints.points)[1].Timestamp-(*taggedPoints.points)[0].Timestamp),
+				c.Assert(len(*taggedPoints.Datapoints), Equals, 300/60)
+				c.Assert(int((*taggedPoints.Datapoints)[1].Timestamp-(*taggedPoints.Datapoints)[0].Timestamp),
 					Equals, 60)
 			}
 		}

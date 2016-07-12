@@ -28,10 +28,10 @@ type TimeSeries struct {
 
 // TaggedPoints structure hold points with attached Tags
 type TaggedPoints struct {
-	ns     *string
-	name   *string
-	tags   *Tags
-	points *[]generator.Point
+	Namespace  *string
+	MetricName *string
+	Tags       *Tags
+	Datapoints *[]generator.Point
 }
 
 // Machine sturct keeps state of simulated machine, including timeseries and metadata
