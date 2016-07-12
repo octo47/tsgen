@@ -189,16 +189,20 @@ func genOrCache(cache *map[uint64]string, prefix string, key uint64) string {
 func generateTags(rnd *rand.Rand, numTags int) Tags {
 	tagsCache := make(map[uint64]string)
 	valuesCache := make(map[uint64]string)
-	tags := make(Tags, numTags)
 	tagsGen := rand.NewZipf(rnd, 1.2, 1.1, uint64(numTags-1))
 	valuesGen := rand.NewZipf(rnd, 1.1, 1.1, uint64(numTags-1))
-	for tagIdx := 0; tagIdx < numTags; tagIdx++ {
-		tagName := genOrCache(&tagsCache, "tag", tagsGen.Uint64())
-		value := genOrCache(&valuesCache, "value", valuesGen.Uint64())
-		tags[tagIdx] = Tag{tagName, value}
+	tags := make(Tags, 0, numTags)
+	tagsToGo := numTags
+	for tagsToGo > 0 {
+		for tagIdx := len(tags); tagIdx < numTags; tagIdx++ {
+			tagName := genOrCache(&tagsCache, "tag", tagsGen.Uint64())
+			value := genOrCache(&valuesCache, "value", valuesGen.Uint64())
+			tags = append(tags, Tag{tagName, value})
+		}
+		sort.Sort(&tags)
+		deduplicateTags(&tags)
+		tagsToGo = numTags - len(tags)
 	}
-	sort.Sort(&tags)
-	deduplicateTags(&tags)
 	return tags
 }
 
@@ -215,7 +219,7 @@ func deduplicateTags(tags *Tags) {
 			newTags = append(newTags, (*tags)[prev])
 		}
 	}
-	tags = &newTags
+	*tags = newTags
 }
 
 func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {

@@ -1,8 +1,8 @@
 package tsgen
 
 import (
-	"fmt"
 	"math/rand"
+	"sort"
 
 	"github.com/golang/glog"
 
@@ -26,6 +26,21 @@ func (s *SimulatorSuite) TestSimulatorTick(c *C) {
 	c.Assert(len(simulator.machines), Equals, 3)
 	glog.Info(simulator.machines)
 	simulator.Run(0, 1, 1600, func(tp *[]TaggedPoints) {
-		fmt.Println(*tp)
+		// nothing to do
 	})
+}
+
+func (s *SimulatorSuite) TestDeduplicate(c *C) {
+	tags := Tags{
+		Tag{"tag1", "value1"}, Tag{"tag2", "value2"},
+		Tag{"tag2", "value1"}, Tag{"tag1", "value1"},
+	}
+	sort.Sort(&tags)
+	deduplicateTags(&tags)
+	dupes := make(map[Tag]bool)
+	for ti := range tags {
+		_, ok := dupes[tags[ti]]
+		c.Assert(ok, Equals, false)
+		dupes[tags[ti]] = true
+	}
 }
