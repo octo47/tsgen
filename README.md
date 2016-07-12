@@ -1,0 +1,2 @@
+# tsgen
+Simple 'metrics' generator.
