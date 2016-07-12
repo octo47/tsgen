@@ -44,3 +44,12 @@ func (s *SimulatorSuite) TestDeduplicate(c *C) {
 		dupes[tags[ti]] = true
 	}
 }
+
+func (s *SimulatorSuite) BenchmarkSimulator(c *C) {
+	rnd := rand.New(rand.NewSource(1))
+	conf := NewConfiguration(c.N, 1000)
+	simulator := NewSimulator(rnd, conf, 0)
+	simulator.Run(0, 1, 1600, func(tp *[]TaggedPoints) {
+		// nothing to do
+	})
+}
