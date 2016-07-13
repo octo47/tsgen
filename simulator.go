@@ -30,6 +30,8 @@ type Configuration struct {
 	GlobalTags int
 	// unique tags are tags assigned per machine
 	UniqueTags int
+	// PerMachineTags is some tags that unique to every machine, like location
+	PerMachineTags int
 	// minimun tags
 	MinimumTags int
 	// Total metrics
@@ -51,7 +53,8 @@ func NewConfiguration(machines int, metrics int) Configuration {
 		Machines:            machines,
 		Clusters:            machines/256 + 1,
 		GlobalTags:          8,
-		UniqueTags:          machines * 10,
+		UniqueTags:          machines / 10,
+		PerMachineTags:      2, // hostname and rack place for example
 		MinimumTags:         4,
 		MetricsTotal:        machines * 300,
 		BaseMetrics:         metrics/10 + 1,
@@ -70,44 +73,59 @@ type clusterDef struct {
 
 func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulator {
 	clusters := generateClusters(rnd, conf)
+	if glog.V(1) {
+		glog.Info("Generated ", len(clusters), " clusters")
+	}
 	clusterGen := rand.NewZipf(rnd, 1.2, 1.1, uint64(conf.Clusters-1))
-	globalTags := NewTagsDef(rnd, conf.GlobalTags, conf.GlobalTags)
+	globalTags := NewTagsDef(rnd, "global", "gv", conf.GlobalTags, conf.GlobalTags)
 	metrics := generateMetrics(rnd, conf)
+	if glog.V(1) {
+		glog.Info("Generated ", len(metrics), " metrics")
+	}
 	machines := make([]*Machine, conf.Machines)
 	for machine := 0; machine < conf.Machines; machine++ {
 		var tags Tags
-		machineName := genName("host-", machine)
+		machineName := genName("machine-", machine)
 		clusterIdx := clusterGen.Uint64()
 		tags = append(tags, globalTags.selectTags(conf.MinimumTags)...)
 		tags = append(tags, clusters[clusterIdx].tags.selectTags(conf.MinimumTags)...)
+		tags = append(tags, generateTags(rnd, machineName, machineName, conf.PerMachineTags)...)
+		metricsCount := rnd.Intn(conf.MaxMetrics - conf.BaseMetrics)
 		machines[machine] = NewMachine(machineName, tags,
-			startTime+uint64(rnd.Intn(conf.StartSplay)))
+			startTime+uint64(rnd.Intn(conf.StartSplay)), metricsCount+conf.BaseMetrics)
 		if glog.V(1) {
 			glog.Info("Machine ", machineName, " cluster=", clusterIdx,
 				" tags=", tags, " startTime=", machines[machine].lastTs)
 		}
 		for metric := 0; metric < conf.BaseMetrics; metric++ {
 			gen, name := metrics[metric].genMaker()
+			selectedTags := metrics[metric].tags.selectTags(conf.TagsPerMetric)
 			machines[machine].AddTimeseriesWithTags(
 				metrics[metric].namespace,
 				name,
-				metrics[metric].tags.selectTags(conf.TagsPerMetric),
+				selectedTags,
 				gen,
 				metrics[metric].period)
 		}
-		metricsCount := rnd.Intn(conf.MaxMetrics - conf.BaseMetrics)
+		if glog.V(1) {
+			glog.Info("Machine ", machineName, " has ", conf.BaseMetrics, " base metrics")
+		}
 		metricsSelected := make(map[int]bool)
 		for i := 0; i < metricsCount; i++ {
 			metricsSelected[rnd.Intn(conf.MaxMetrics-conf.BaseMetrics)+conf.BaseMetrics] = true
 		}
 		for metric := range metricsSelected {
 			gen, name := metrics[metric].genMaker()
+			selectedTags := metrics[metric].tags.selectTags(conf.TagsPerMetric)
 			machines[machine].AddTimeseriesWithTags(
 				metrics[metric].namespace,
 				name,
-				metrics[metric].tags.selectTags(conf.TagsPerMetric),
+				selectedTags,
 				gen,
 				metrics[metric].period)
+		}
+		if glog.V(1) {
+			glog.Info("Machine ", machineName, " has ", metricsCount, " unique metrics")
 		}
 	}
 	return &Simulator{conf, startTime, machines, globalTags}
@@ -138,9 +156,9 @@ type metricDef struct {
 	genMaker  func() (generator.Generator, string)
 }
 
-func NewTagsDef(rnd *rand.Rand, maxTags int, maxCount int) tagsDef {
+func NewTagsDef(rnd *rand.Rand, namePrefix, valuePrefix string, maxTags int, maxCount int) tagsDef {
 	return tagsDef{
-		tags:              generateTags(rnd, maxTags),
+		tags:              generateTags(rnd, namePrefix, valuePrefix, maxTags),
 		tagDistribution:   rand.NewZipf(rnd, 1.2, 1.1, uint64(maxTags-1)),
 		countDistribution: rand.NewZipf(rnd, 1.2, 1.1, uint64(maxCount-1)),
 	}
@@ -150,10 +168,16 @@ func (td *tagsDef) selectTags(minimum int) Tags {
 	if count < minimum {
 		count = minimum
 	}
-	tags := make(Tags, count)
-	for idx := 0; idx < len(tags); idx++ {
-		tagIdx := int(td.tagDistribution.Uint64())
-		tags[idx] = td.tags[tagIdx]
+	tags := make(Tags, 0, count)
+	toGo := count
+	for toGo > 0 {
+		for idx := len(tags); idx < count; idx++ {
+			tagIdx := int(td.tagDistribution.Uint64())
+			tags = append(tags, td.tags[tagIdx])
+		}
+		sort.Sort(&tags)
+		deduplicateTags(&tags)
+		toGo -= len(tags)
 	}
 	return tags
 }
@@ -162,8 +186,8 @@ func generateClusters(rnd *rand.Rand, conf Configuration) []clusterDef {
 	clusters := make([]clusterDef, conf.Clusters)
 	for cID := 0; cID < conf.Clusters; cID++ {
 		clusters[cID].cID = cID
-		clusters[cID].tags = NewTagsDef(rnd, conf.UniqueTags, conf.UniqueTags)
-		if glog.V(1) {
+		clusters[cID].tags = NewTagsDef(rnd, "uniq", "uv", conf.UniqueTags, conf.UniqueTags)
+		if glog.V(2) {
 			glog.Info("Cluster ", cID, " tags=", clusters[cID].tags.tags)
 		}
 	}
@@ -186,7 +210,7 @@ func genOrCache(cache *map[uint64]string, prefix string, key uint64) string {
 	return name
 }
 
-func generateTags(rnd *rand.Rand, numTags int) Tags {
+func generateTags(rnd *rand.Rand, namePrefix, valuePrefix string, numTags int) Tags {
 	tagsCache := make(map[uint64]string)
 	valuesCache := make(map[uint64]string)
 	tagsGen := rand.NewZipf(rnd, 1.2, 1.1, uint64(numTags-1))
@@ -195,8 +219,8 @@ func generateTags(rnd *rand.Rand, numTags int) Tags {
 	tagsToGo := numTags
 	for tagsToGo > 0 {
 		for tagIdx := len(tags); tagIdx < numTags; tagIdx++ {
-			tagName := genOrCache(&tagsCache, "tag", tagsGen.Uint64())
-			value := genOrCache(&valuesCache, "value", valuesGen.Uint64())
+			tagName := genOrCache(&tagsCache, namePrefix, tagsGen.Uint64())
+			value := genOrCache(&valuesCache, valuePrefix, valuesGen.Uint64())
 			tags = append(tags, Tag{tagName, value})
 		}
 		sort.Sort(&tags)
@@ -233,7 +257,7 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 		ns := rnd.Intn(namespaces)
 		metrics[i].namespace = genName("ns", ns)
 		metrics[i].period = uint64(15 * (int(periodDF.Uint64()) + 1))
-		metrics[i].tags = NewTagsDef(rnd, conf.TagsPerMetric, conf.TagsPerMetric)
+		metrics[i].tags = NewTagsDef(rnd, "mtag", "mv", conf.TagsPerMetric, conf.TagsPerMetric)
 		metrics[i].genMaker = func() (generator.Generator, string) {
 			genNum := genNum
 			scale := scale

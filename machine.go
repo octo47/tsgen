@@ -44,8 +44,9 @@ type Machine struct {
 }
 
 // NewMachine creates Machine with specified tags and initial timestamp.
-func NewMachine(name string, tags Tags, initialTs uint64) *Machine {
-	return &Machine{name: name, tags: tags, lastTs: initialTs}
+func NewMachine(name string, tags Tags, initialTs uint64, expectedTimeseries int) *Machine {
+	return &Machine{name: name, tags: tags, lastTs: initialTs,
+		timeseries: make([]TimeSeries, 0, expectedTimeseries)}
 }
 
 // AddTimeseries adds timeseries with generator and period.
@@ -58,7 +59,8 @@ func (m *Machine) AddTimeseries(ns string, name string, gen generator.Generator,
 func (m *Machine) AddTimeseriesWithTags(
 	ns string, name string, tags Tags, gen generator.Generator, period uint64) {
 	m.timeseries = append(m.timeseries,
-		TimeSeries{ns: ns, name: name, tags: append(tags, m.tags...), lastTs: m.lastTs, period: period, gen: gen})
+		TimeSeries{ns: ns, name: name, tags: append(tags, m.tags...),
+			lastTs: m.lastTs, period: period, gen: gen})
 }
 
 // Tick advance time for machine. Machine generates all metrics up to provided timestamp.

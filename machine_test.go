@@ -18,7 +18,7 @@ var _ = Suite(&MachineSuite{
 })
 
 func (s *MachineSuite) TestMachineTick(c *C) {
-	machine := NewMachine("testhost", s.tags, 0)
+	machine := NewMachine("testhost", s.tags, 0, 2)
 	machine.AddTimeseries("service", "requests", generator.NewSpikesGenerator(s.rnd), 15)
 	cpuTags := []string{"usr", "sys", "io"}
 	for _, cpuTag := range cpuTags {
