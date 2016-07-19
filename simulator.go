@@ -238,7 +238,7 @@ func deduplicateTags(tags *Tags) {
 	prev := 0
 	newTags = append(newTags, (*tags)[prev])
 	for i := 1; i < len(*tags); i++ {
-		if (*tags)[i] != (*tags)[prev] {
+		if (*tags)[i].Value != (*tags)[prev].Value {
 			prev = i
 			newTags = append(newTags, (*tags)[prev])
 		}
