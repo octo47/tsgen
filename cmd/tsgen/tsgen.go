@@ -60,14 +60,14 @@ func main() {
 			for atomic.LoadInt32(&exit) != 1 {
 				sim.Run(shard, *parallel, *pollPeriod, func(tp *[]tsgen.TaggedPoints) {
 					for i := range *tp {
-						tagstr := (*tp)[i].Tags.FormatCommaSeparated()
+						tagstr := (*tp)[i].Tags.FormatSeparated(' ')
 						for _, point := range *(*tp)[i].Datapoints {
 							var fullMetricName bytes.Buffer
 							fullMetricName.WriteString(*(*tp)[i].Namespace)
 							fullMetricName.WriteRune('.')
 							fullMetricName.WriteString(*(*tp)[i].MetricName)
-							fmt.Println(fullMetricName.String(),
-								tagstr, point.Timestamp, point.Value)
+							fmt.Println("put", fullMetricName.String(),
+								point.Timestamp, point.Value, tagstr)
 						}
 					}
 				})

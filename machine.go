@@ -126,12 +126,13 @@ func (tags *Tags) Swap(i int, j int) {
 	(*tags)[i], (*tags)[j] = (*tags)[j], (*tags)[i]
 }
 
-func (tags *Tags) FormatCommaSeparated() string {
+// FormatSeparated builds string from tags: tag=value<separator>tag=value...
+func (tags *Tags) FormatSeparated(separator rune) string {
 	var buf bytes.Buffer
 	sep := false
 	for i := range *tags {
 		if sep {
-			buf.WriteRune(',')
+			buf.WriteRune(separator)
 		} else {
 			sep = true
 		}
