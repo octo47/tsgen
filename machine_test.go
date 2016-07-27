@@ -25,7 +25,7 @@ func (s *MachineSuite) TestMachineTick(c *C) {
 		machine.AddTimeseriesWithTags("sys", "cpu", []Tag{Tag{"cpu.type", cpuTag}},
 			generator.NewRandomWalkGenerator(s.rnd), 15)
 	}
-	machine.AddTimeseries("sys", "disk.usage", generator.NewIncreasingGenerator(s.rnd), 60)
+	machine.AddTimeseries("sys", "disk.usage", generator.NewIncreasingGenerator(s.rnd, 0.8), 60)
 	for timestamp := uint64(300); timestamp < 1200; timestamp += 300 {
 		result := machine.Tick(timestamp)
 		c.Assert(len(*result), Equals, 5)

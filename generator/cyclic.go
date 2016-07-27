@@ -10,21 +10,19 @@ type CyclicGenerator struct {
 	rnd     *rand.Rand
 	last    Point
 	bias    float64
-	degrees float64
+	counter int
 }
 
 func NewCyclicGenerator(r *rand.Rand) *CyclicGenerator {
-	return &CyclicGenerator{rnd: r}
+	return &CyclicGenerator{rnd: r, counter: r.Intn(365)}
 }
 
 func (rw *CyclicGenerator) Next(points *[]Point) {
 	for i := range *points {
-		rval := rw.rnd.Float64()
-		rw.last.Value += rval * math.Sin(rw.degrees*math.Pi/288) / 20
-		rw.degrees++
-		if rw.degrees > 360 {
-			rw.degrees = 0
-		}
+		rw.last.Value = calculateNext(
+			rw.last.Value,
+			rw.rnd.Float64()+math.Sin(float64(rw.counter)*math.Pi/288)/20)
+		rw.counter++
 		(*points)[i] = rw.last
 	}
 }

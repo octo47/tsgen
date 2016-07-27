@@ -17,7 +17,7 @@ func NewSpikesGenerator(r *rand.Rand) *SpikesGenerator {
 
 func (rw *SpikesGenerator) Next(points *[]Point) {
 	for i := range *points {
-		rw.last.Value = math.Ceil(math.Tan(rw.rnd.Float64()*math.Pi/2)) / 100
+		rw.last.Value = math.Ceil(math.Tan(rw.rnd.Float64()*math.Pi/2)) / 1000
 		(*points)[i] = rw.last
 	}
 }

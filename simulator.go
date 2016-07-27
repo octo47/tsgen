@@ -53,7 +53,7 @@ func NewConfiguration(machines int, metrics int) Configuration {
 		Machines:            machines,
 		Clusters:            machines/256 + 1,
 		GlobalTags:          8,
-		UniqueTags:          machines / 10,
+		UniqueTags:          machines/10 + 2,
 		PerMachineTags:      2, // hostname and rack place for example
 		MinimumTags:         4,
 		MetricsTotal:        machines * 300,
@@ -157,8 +157,12 @@ type metricDef struct {
 }
 
 func NewTagsDef(rnd *rand.Rand, namePrefix, valuePrefix string, maxTags int, maxCount int) tagsDef {
+	tags := generateTags(rnd, namePrefix, valuePrefix, maxTags)
+	if len(tags) == 0 {
+		panic("Tags is zero for " + namePrefix)
+	}
 	return tagsDef{
-		tags:              generateTags(rnd, namePrefix, valuePrefix, maxTags),
+		tags:              tags,
 		tagDistribution:   rand.NewZipf(rnd, 1.2, 1.1, uint64(maxTags-1)),
 		countDistribution: rand.NewZipf(rnd, 1.2, 1.1, uint64(maxCount-1)),
 	}
@@ -211,6 +215,9 @@ func genOrCache(cache *map[uint64]string, prefix string, key uint64) string {
 }
 
 func generateTags(rnd *rand.Rand, namePrefix, valuePrefix string, numTags int) Tags {
+	if numTags == 0 {
+		panic("numTags shouldn't be zero for " + namePrefix)
+	}
 	tagsCache := make(map[uint64]string)
 	valuesCache := make(map[uint64]string)
 	tagsGen := rand.NewZipf(rnd, 1.2, 1.1, uint64(numTags-1))
@@ -265,7 +272,7 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 			var metricPrefix string
 			switch genNum {
 			case 4:
-				gen = generator.NewIncreasingGenerator(rnd)
+				gen = generator.NewIncreasingGenerator(rnd, 0.8)
 				metricPrefix = "metricI"
 			case 1:
 				gen = generator.NewSpikesGenerator(rnd)
@@ -274,7 +281,7 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 				gen = generator.NewCyclicGenerator(rnd)
 				metricPrefix = "metricC"
 			default:
-				gen = generator.NewRandomWalkGeneratorPositive(rnd)
+				gen = generator.NewRandomWalkGenerator(rnd)
 				metricPrefix = "metricR"
 			}
 			return generator.NewScalingGenerator(gen, scale), genName(metricPrefix, i)

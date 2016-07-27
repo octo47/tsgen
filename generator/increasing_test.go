@@ -13,11 +13,13 @@ var _ = Suite(&IncreasingGeneratorSuite{})
 
 func (s *IncreasingGeneratorSuite) TestIncreasing(c *C) {
 	rnd := rand.New(rand.NewSource(1))
-	rw := NewIncreasingGenerator(rnd)
-	points := make([]Point, 10)
+	rw := NewIncreasingGenerator(rnd, 0.8)
+	points := make([]Point, 1000)
 	rw.Next(&points)
+	diffSum := 0.0
 	for i := 0; i < len(points)-2; i++ {
-		diff := points[i+1].Value - points[i].Value
-		c.Assert(diff >= 0, Equals, true, Commentf("Diff should be positive: %v", diff))
+		diffSum += points[i+1].Value - points[i].Value
 	}
+	c.Assert(diffSum > 0, Equals, true,
+		Commentf("Generally we need to be increaseing: %v", diffSum))
 }
