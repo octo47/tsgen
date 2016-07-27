@@ -275,7 +275,7 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 				gen = generator.NewIncreasingGenerator(rnd, 0.8)
 				metricPrefix = "metricI"
 			case 1:
-				gen = generator.NewSpikesGenerator(rnd)
+				gen = generator.NewSpikesGenerator(rnd, 10.0)
 				metricPrefix = "metricS"
 			case 3:
 				gen = generator.NewCyclicGenerator(rnd)
