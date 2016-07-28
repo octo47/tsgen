@@ -1,10 +1,19 @@
 package generator
 
-import "math"
+import (
+	"math/rand"
+)
 
 type Generator interface {
 	// fill slice with generated points
 	Next(points *[]Point)
+}
+
+type boundedGenerator struct {
+	rnd   *rand.Rand
+	last  Point
+	lower float64
+	upper float64
 }
 
 type Point struct {
@@ -20,15 +29,14 @@ func calculateStep(dv float64) float64 {
 	return (dv - 0.5) * (dv - 0.5) * coeff
 }
 
-func calculateNext(currValue float64, dv float64) float64 {
+func calculateNext(currValue, dv, lower, upper float64) float64 {
 	step := calculateStep(dv)
-	// make ajustements only if we are going to 'reduce' postivie value
-	if step < 0.0 && currValue+step < 0.0 {
-		// taking absolute value and using it for calculating relative decrease
-		// but keeping value positive
-		currValue *= math.Abs(currValue) / math.Abs(step)
-	} else {
-		currValue += step
+	newValue := currValue + step
+	switch {
+	case newValue > upper:
+		return upper
+	case newValue < lower:
+		return lower
 	}
 	return currValue
 }

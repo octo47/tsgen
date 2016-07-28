@@ -4,17 +4,24 @@ import "math/rand"
 
 // RandomWalkGenerator implements random walk.
 type RandomWalkGenerator struct {
-	rnd  *rand.Rand
-	last Point
+	boundedGenerator
+	step float64
 }
 
-func NewRandomWalkGenerator(r *rand.Rand) *RandomWalkGenerator {
-	return &RandomWalkGenerator{rnd: r}
+func NewRandomWalkGenerator(
+	r *rand.Rand, step, lowerBound, upperBound float64) *RandomWalkGenerator {
+
+	return &RandomWalkGenerator{
+		boundedGenerator: boundedGenerator{
+			rnd: r, lower: lowerBound, upper: upperBound,
+		},
+		step: step,
+	}
 }
 
 func (rw *RandomWalkGenerator) Next(points *[]Point) {
 	for i := range *points {
-		rw.last.Value = calculateNext(rw.last.Value, rw.rnd.Float64())
+		rw.last.Value = calculateNext(rw.last.Value, rw.step*rw.rnd.Float64(), rw.lower, rw.upper)
 		(*points)[i] = rw.last
 	}
 }

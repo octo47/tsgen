@@ -7,20 +7,18 @@ import (
 
 // SpikesGenerator implements random walk.
 type SpikesGenerator struct {
-	rnd      *rand.Rand
-	last     Point
-	maxSpike float64
+	boundedGenerator
 }
 
-func NewSpikesGenerator(r *rand.Rand, maxSpike float64) *SpikesGenerator {
-	return &SpikesGenerator{rnd: r, maxSpike: maxSpike}
+func NewSpikesGenerator(r *rand.Rand, upperBound float64) *SpikesGenerator {
+	return &SpikesGenerator{boundedGenerator{rnd: r, upper: upperBound, lower: 0.0}}
 }
 
 func (rw *SpikesGenerator) Next(points *[]Point) {
 	for i := range *points {
 		spike := math.Ceil(math.Tan(rw.rnd.Float64()*math.Pi/2)) / 100
-		if spike > rw.maxSpike {
-			spike = rw.maxSpike
+		if spike > rw.upper {
+			spike = rw.upper
 		}
 		rw.last.Value = spike
 		(*points)[i] = rw.last

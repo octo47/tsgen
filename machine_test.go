@@ -19,13 +19,14 @@ var _ = Suite(&MachineSuite{
 
 func (s *MachineSuite) TestMachineTick(c *C) {
 	machine := NewMachine("testhost", s.tags, 0, 2)
-	machine.AddTimeseries("service", "requests", generator.NewSpikesGenerator(s.rnd, 1.0), 15)
+	machine.AddTimeseries("service", "requests", generator.NewSpikesGenerator(s.rnd, 100.0), 15)
 	cpuTags := []string{"usr", "sys", "io"}
 	for _, cpuTag := range cpuTags {
 		machine.AddTimeseriesWithTags("sys", "cpu", []Tag{Tag{"cpu.type", cpuTag}},
-			generator.NewRandomWalkGenerator(s.rnd), 15)
+			generator.NewRandomWalkGenerator(s.rnd, 0.1, 0.0, 100.0), 15)
 	}
-	machine.AddTimeseries("sys", "disk.usage", generator.NewIncreasingGenerator(s.rnd, 0.8), 60)
+	machine.AddTimeseries("sys", "disk.usage",
+		generator.NewIncreasingGenerator(s.rnd, 0.8, 0.01, 0.0, 100.0), 60)
 	for timestamp := uint64(300); timestamp < 1200; timestamp += 300 {
 		result := machine.Tick(timestamp)
 		c.Assert(len(*result), Equals, 5)

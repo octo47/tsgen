@@ -272,16 +272,16 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 			var metricPrefix string
 			switch genNum {
 			case 4:
-				gen = generator.NewIncreasingGenerator(rnd, 0.8)
+				gen = generator.NewIncreasingGenerator(rnd, 0.8, 0.01, 0.0, 100.0)
 				metricPrefix = "metricI"
 			case 1:
-				gen = generator.NewSpikesGenerator(rnd, 10.0)
+				gen = generator.NewSpikesGenerator(rnd, 100.0)
 				metricPrefix = "metricS"
 			case 3:
-				gen = generator.NewCyclicGenerator(rnd)
+				gen = generator.NewCyclicGenerator(rnd, 0.0, 100.0)
 				metricPrefix = "metricC"
 			default:
-				gen = generator.NewRandomWalkGenerator(rnd)
+				gen = generator.NewRandomWalkGenerator(rnd, 1.0, 0.0, 100)
 				metricPrefix = "metricR"
 			}
 			return generator.NewScalingGenerator(gen, scale), genName(metricPrefix, i)

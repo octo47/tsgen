@@ -7,21 +7,22 @@ import (
 
 // CyclicGenerator implements random walk.
 type CyclicGenerator struct {
-	rnd     *rand.Rand
-	last    Point
-	bias    float64
+	boundedGenerator
 	counter int
 }
 
-func NewCyclicGenerator(r *rand.Rand) *CyclicGenerator {
-	return &CyclicGenerator{rnd: r, counter: r.Intn(365)}
+func NewCyclicGenerator(r *rand.Rand, lowerBound, upperBound float64) *CyclicGenerator {
+	return &CyclicGenerator{counter: r.Intn(365),
+		boundedGenerator: boundedGenerator{rnd: r, lower: lowerBound, upper: upperBound}}
 }
 
 func (rw *CyclicGenerator) Next(points *[]Point) {
 	for i := range *points {
 		rw.last.Value = calculateNext(
 			rw.last.Value,
-			rw.rnd.Float64()+math.Sin(float64(rw.counter)*math.Pi/288)/20)
+			rw.rnd.Float64()+math.Sin(float64(rw.counter)*math.Pi/288)/20,
+			rw.lower,
+			rw.upper)
 		rw.counter++
 		(*points)[i] = rw.last
 	}
