@@ -23,6 +23,9 @@ func (rw *SpikesGenerator) Next(points *[]Point) {
 			// tan can be quite large
 			spike = 1.0
 		}
+		if spike < 0.5 {
+			spike = 0
+		}
 		spike *= rw.upper
 		if rw.last.Value > spike {
 			rw.last.Value *= rw.rnd.Float64() // decay spike

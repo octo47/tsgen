@@ -14,7 +14,7 @@ type CyclicGenerator struct {
 func NewCyclicGenerator(r *rand.Rand, lowerBound, upperBound float64) *CyclicGenerator {
 	return &CyclicGenerator{counter: r.Intn(365),
 		boundedGenerator: boundedGenerator{
-			rnd: r, step: (upperBound - lowerBound) / 10, lower: lowerBound, upper: upperBound,
+			rnd: r, step: (upperBound - lowerBound) / 100.0, lower: lowerBound, upper: upperBound,
 		}}
 }
 
