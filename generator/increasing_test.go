@@ -13,7 +13,7 @@ var _ = Suite(&IncreasingGeneratorSuite{})
 
 func (s *IncreasingGeneratorSuite) TestIncreasing(c *C) {
 	rnd := rand.New(rand.NewSource(1))
-	rw := NewIncreasingGenerator(rnd, 0.8, 0.01, 0.0, 10.0)
+	rw := NewIncreasingGenerator(rnd, 0.8, 0.01, 0.1, 0.0, 10.0)
 	points := make([]Point, 1000)
 	rw.Next(&points)
 	diffSum := 0.0

@@ -26,7 +26,7 @@ func (s *MachineSuite) TestMachineTick(c *C) {
 			generator.NewRandomWalkGenerator(s.rnd, 0.1, 0.0, 100.0), 15)
 	}
 	machine.AddTimeseries("sys", "disk.usage",
-		generator.NewIncreasingGenerator(s.rnd, 0.8, 0.01, 0.0, 100.0), 60)
+		generator.NewIncreasingGenerator(s.rnd, 0.8, 0.01, 0.1, 0.0, 100.0), 60)
 	for timestamp := uint64(300); timestamp < 1200; timestamp += 300 {
 		result := machine.Tick(timestamp)
 		c.Assert(len(*result), Equals, 5)

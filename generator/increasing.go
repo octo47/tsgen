@@ -10,12 +10,14 @@ type IncreasingGenerator struct {
 }
 
 func NewIncreasingGenerator(
-	r *rand.Rand, bias, resetProb, lowerBound, upperBound float64) *IncreasingGenerator {
+	r *rand.Rand, bias, resetProb, step, lowerBound, upperBound float64) *IncreasingGenerator {
 
 	return &IncreasingGenerator{
-		boundedGenerator: boundedGenerator{rnd: r, lower: lowerBound, upper: upperBound},
-		bias:             bias,
-		resetProb:        resetProb,
+		boundedGenerator: boundedGenerator{
+			rnd: r, step: step, lower: lowerBound, upper: upperBound,
+		},
+		bias:      bias,
+		resetProb: resetProb,
 	}
 }
 
@@ -24,8 +26,7 @@ func (rw *IncreasingGenerator) Next(points *[]Point) {
 		if rw.rnd.Float64() < rw.resetProb {
 			rw.last.Value = rw.lower
 		} else {
-			rw.last.Value = calculateNext(rw.last.Value, rw.rnd.Float64()+rw.bias,
-				rw.lower, rw.upper)
+			calculateNext(rw.rnd.Float64()+rw.bias, &rw.boundedGenerator)
 		}
 		(*points)[i] = rw.last
 	}

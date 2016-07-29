@@ -13,7 +13,7 @@ func NewRandomWalkGenerator(
 
 	return &RandomWalkGenerator{
 		boundedGenerator: boundedGenerator{
-			rnd: r, lower: lowerBound, upper: upperBound,
+			rnd: r, lower: lowerBound, upper: upperBound, step: step,
 		},
 		step: step,
 	}
@@ -21,7 +21,7 @@ func NewRandomWalkGenerator(
 
 func (rw *RandomWalkGenerator) Next(points *[]Point) {
 	for i := range *points {
-		rw.last.Value = calculateNext(rw.last.Value, rw.step*rw.rnd.Float64(), rw.lower, rw.upper)
+		calculateNext(rw.rnd.Float64(), &rw.boundedGenerator)
 		(*points)[i] = rw.last
 	}
 }
