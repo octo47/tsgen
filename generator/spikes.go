@@ -35,3 +35,16 @@ func (rw *SpikesGenerator) Next(points *[]Point) {
 		(*points)[i] = rw.last
 	}
 }
+
+func (rw *SpikesGenerator) UpperBound() float64 {
+	return rw.upper
+}
+
+func (rw *SpikesGenerator) LowerBound() float64 {
+	return 0.0
+}
+
+func (rw *SpikesGenerator) SetMiddle() {
+	// we don't support middle for spikes, so just reset to zero
+	rw.last.Value = 0.0
+}

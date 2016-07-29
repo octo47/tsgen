@@ -31,3 +31,15 @@ func (rw *IncreasingGenerator) Next(points *[]Point) {
 		(*points)[i] = rw.last
 	}
 }
+
+func (rw *IncreasingGenerator) UpperBound() float64 {
+	return rw.upper
+}
+
+func (rw *IncreasingGenerator) LowerBound() float64 {
+	return rw.lower
+}
+
+func (rw *IncreasingGenerator) SetMiddle() {
+	rw.last.Value = (rw.upper-rw.lower)/2 + rw.lower
+}

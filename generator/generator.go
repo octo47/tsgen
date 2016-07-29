@@ -5,6 +5,9 @@ import "math/rand"
 type Generator interface {
 	// fill slice with generated points
 	Next(points *[]Point)
+	LowerBound() float64
+	UpperBound() float64
+	SetMiddle()
 }
 
 type boundedGenerator struct {

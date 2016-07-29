@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"fmt"
 	"math/rand"
 
 	. "gopkg.in/check.v1"
@@ -17,5 +16,4 @@ func (s *CyclicGeneratorSuite) TestCyclic(c *C) {
 	rw := NewCyclicGenerator(rnd, 0.0, 100.0)
 	points := make([]Point, 512)
 	rw.Next(&points)
-	fmt.Println(points)
 }
