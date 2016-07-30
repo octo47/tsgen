@@ -22,7 +22,7 @@ func (rw *CombineGenerator) Next(points *[]Point) {
 				newValue = rw.base.UpperBound()
 				rw.mutators[mi].SetMiddle()
 			case newValue < rw.base.LowerBound():
-				newValue = rw.base.UpperBound()
+				newValue = rw.base.LowerBound()
 				rw.mutators[mi].SetMiddle()
 			}
 			(*points)[i].Value = newValue
