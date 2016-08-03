@@ -16,3 +16,15 @@ func (rw *ScalingGenerator) Next(points *[]Point) {
 		(*points)[i].Value *= rw.scale
 	}
 }
+
+func (rw *ScalingGenerator) UpperBound() float64 {
+	return rw.inner.UpperBound() * rw.scale
+}
+
+func (rw *ScalingGenerator) LowerBound() float64 {
+	return rw.inner.LowerBound() * rw.scale
+}
+
+func (rw *ScalingGenerator) SetMiddle() {
+	rw.inner.SetMiddle()
+}
