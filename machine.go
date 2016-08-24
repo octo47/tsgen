@@ -35,7 +35,7 @@ type TaggedPoints struct {
 	Datapoints *[]generator.Point
 }
 
-// Machine sturct keeps state of simulated machine, including timeseries and metadata
+// Machine struct keeps state of simulated machine, including timeseries and metadata
 type Machine struct {
 	name       string
 	tags       Tags

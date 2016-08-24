@@ -2,6 +2,7 @@ package tsgen
 
 import (
 	"bytes"
+	"math"
 	"math/rand"
 	"sort"
 	"strconv"
@@ -29,7 +30,7 @@ type Configuration struct {
 	// value will be unique to machine
 	GlobalTags int
 	// unique tags are tags assigned per machine
-	UniqueTags int
+	ClusterTags int
 	// PerMachineTags is some tags that unique to every machine, like location
 	PerMachineTags int
 	// minimun tags
@@ -53,10 +54,10 @@ func NewConfiguration(machines int, metrics int) Configuration {
 		Machines:            machines,
 		Clusters:            machines/256 + 1,
 		GlobalTags:          8,
-		UniqueTags:          machines/10 + 2,
+		ClusterTags:         8,
 		PerMachineTags:      2, // hostname and rack place for example
 		MinimumTags:         4,
-		MetricsTotal:        machines * 300,
+		MetricsTotal:        int(math.Log10(float64(machines)) * 300),
 		BaseMetrics:         metrics/10 + 1,
 		MaxMetrics:          metrics,
 		MetricsPerNamespace: metrics/30 + 2,
@@ -190,7 +191,7 @@ func generateClusters(rnd *rand.Rand, conf Configuration) []clusterDef {
 	clusters := make([]clusterDef, conf.Clusters)
 	for cID := 0; cID < conf.Clusters; cID++ {
 		clusters[cID].cID = cID
-		clusters[cID].tags = NewTagsDef(rnd, "uniq", "uv", conf.UniqueTags, conf.UniqueTags)
+		clusters[cID].tags = NewTagsDef(rnd, "cluster", "c", conf.ClusterTags, conf.ClusterTags)
 		if glog.V(2) {
 			glog.Info("Cluster ", cID, " tags=", clusters[cID].tags.tags)
 		}
