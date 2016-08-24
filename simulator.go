@@ -43,23 +43,26 @@ type Configuration struct {
 	MetricsPerNamespace int
 	// Tags per metric
 	TagsPerMetric int
+	// TagValuesPerMetricTag configures how deiverse values of metric tags.
+	TagValuesPerMetricTag int
 	// StartSplay configures how far machines start time could drift away from startTime
 	StartSplay int
 }
 
-func NewConfiguration(machines int, metrics int) Configuration {
+func NewConfiguration(machines int, metrics int, clusters int) Configuration {
 	return Configuration{
-		Machines:            machines,
-		Clusters:            machines/256 + 1,
-		GlobalTags:          8,
-		ClusterTags:         machines/256/48 + 16,
-		MinimumTags:         4,
-		MetricsTotal:        int(math.Log10(float64(machines)) * 300),
-		BaseMetrics:         metrics/10 + 1,
-		MaxMetrics:          metrics,
-		MetricsPerNamespace: metrics/30 + 2,
-		TagsPerMetric:       3,
-		StartSplay:          300,
+		Machines:              machines,
+		Clusters:              clusters,
+		GlobalTags:            8,
+		ClusterTags:           clusters/48 + 16, // suppose 48 machines average per service
+		MinimumTags:           4,
+		MetricsTotal:          int(math.Log10(float64(machines)) * 300),
+		BaseMetrics:           metrics/10 + 1,
+		MaxMetrics:            metrics,
+		MetricsPerNamespace:   metrics/100 + 50,
+		TagsPerMetric:         2,
+		TagValuesPerMetricTag: 64,
+		StartSplay:            300,
 	}
 }
 
@@ -116,6 +119,7 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 		for metric := range metricsSelected {
 			gen, name := metrics[metric].genMaker()
 			selectedTags := metrics[metric].tags.selectTags(conf.TagsPerMetric)
+			glog.Info("Machine ", machineName, " adding metric ", metrics[metric])
 			machines[machine].AddTimeseriesWithTags(
 				metrics[metric].namespace,
 				name,
@@ -124,7 +128,7 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 				metrics[metric].period)
 		}
 		if glog.V(1) {
-			glog.Info("Machine ", machineName, " has ", metricsCount, " unique metrics")
+			glog.Info("Machine ", machineName, " has ", len(metricsSelected), " unique metrics")
 		}
 	}
 	return &Simulator{conf, startTime, machines, globalTags}
@@ -162,11 +166,14 @@ func NewTagsDef(rnd *rand.Rand, namePrefix, valuePrefix string, maxTags int, max
 	}
 	return tagsDef{
 		tags:              tags,
-		tagDistribution:   rand.NewZipf(rnd, 1.2, 1.1, uint64(maxTags-1)),
+		tagDistribution:   rand.NewZipf(rnd, 1.3, 1.1, uint64(maxTags-1)),
 		countDistribution: rand.NewZipf(rnd, 1.2, 1.1, uint64(maxCount-1)),
 	}
 }
 func (td *tagsDef) selectTags(minimum int) Tags {
+	if len(td.tags) == 0 {
+		return nil
+	}
 	count := int(td.countDistribution.Uint64())
 	if count < minimum {
 		count = minimum
@@ -255,7 +262,7 @@ func deduplicateTags(tags *Tags) {
 
 func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 	count := conf.MaxMetrics
-	periodDF := rand.NewZipf(rnd, 1.1, 1.2, 19)
+	periodDF := rand.NewZipf(rnd, 1.3, 1.2, 19)
 	namespaces := count/conf.MetricsPerNamespace + 1
 	metrics := make([]metricDef, count)
 	for i := 0; i < count; i++ {
@@ -264,7 +271,11 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 		ns := rnd.Intn(namespaces)
 		metrics[i].namespace = genName("ns", ns)
 		metrics[i].period = uint64(15 * (int(periodDF.Uint64()) + 1))
-		metrics[i].tags = NewTagsDef(rnd, "mtag", "mv", conf.TagsPerMetric, conf.TagsPerMetric)
+		tagsCount := rnd.Intn(conf.TagsPerMetric * 2)
+		if tagsCount > conf.TagsPerMetric/2 {
+			metrics[i].tags = NewTagsDef(rnd, "mtag", "mv",
+				conf.TagsPerMetric, tagsCount/2)
+		}
 		metrics[i].genMaker = func() (generator.Generator, string) {
 			genNum := genNum
 			scale := scale

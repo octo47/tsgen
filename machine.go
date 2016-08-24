@@ -58,9 +58,20 @@ func (m *Machine) AddTimeseries(ns string, name string, gen generator.Generator,
 // AddTimeseriesWithTags adds timeseries with series specific tags with generator and period.
 func (m *Machine) AddTimeseriesWithTags(
 	ns string, name string, tags Tags, gen generator.Generator, period uint64) {
-	m.timeseries = append(m.timeseries,
-		TimeSeries{ns: ns, name: name, tags: append(tags, m.tags...),
-			lastTs: m.lastTs, period: period, gen: gen})
+	if len(tags) == 0 {
+		m.timeseries = append(m.timeseries,
+			TimeSeries{ns: ns, name: name, tags: m.tags,
+				lastTs: m.lastTs, period: period, gen: gen})
+	} else {
+		for tg := range tags {
+			ntags := make([]Tag, len(m.tags), len(m.tags)+1)
+			copy(ntags, m.tags)
+			ntags = append(ntags, tags[tg])
+			m.timeseries = append(m.timeseries,
+				TimeSeries{ns: ns, name: name, tags: ntags,
+					lastTs: m.lastTs, period: period, gen: gen})
+		}
+	}
 }
 
 // Tick advance time for machine. Machine generates all metrics up to provided timestamp.
