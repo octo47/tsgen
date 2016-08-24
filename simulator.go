@@ -31,8 +31,6 @@ type Configuration struct {
 	GlobalTags int
 	// unique tags are tags assigned per machine
 	ClusterTags int
-	// PerMachineTags is some tags that unique to every machine, like location
-	PerMachineTags int
 	// minimun tags
 	MinimumTags int
 	// Total metrics
@@ -54,8 +52,7 @@ func NewConfiguration(machines int, metrics int) Configuration {
 		Machines:            machines,
 		Clusters:            machines/256 + 1,
 		GlobalTags:          8,
-		ClusterTags:         8,
-		PerMachineTags:      2, // hostname and rack place for example
+		ClusterTags:         machines/256/48 + 16,
 		MinimumTags:         4,
 		MetricsTotal:        int(math.Log10(float64(machines)) * 300),
 		BaseMetrics:         metrics/10 + 1,
@@ -90,7 +87,8 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 		clusterIdx := clusterGen.Uint64()
 		tags = append(tags, globalTags.selectTags(conf.MinimumTags)...)
 		tags = append(tags, clusters[clusterIdx].tags.selectTags(conf.MinimumTags)...)
-		tags = append(tags, generateTags(rnd, machineName, machineName, conf.PerMachineTags)...)
+		tags = append(tags, Tag{Name: "machine", Value: machineName})
+		tags = append(tags, Tag{Name: "rack", Value: strconv.Itoa(machine / 48)})
 		metricsCount := rnd.Intn(conf.MaxMetrics - conf.BaseMetrics)
 		machines[machine] = NewMachine(machineName, tags,
 			startTime+uint64(rnd.Intn(conf.StartSplay)), metricsCount+conf.BaseMetrics)
@@ -191,7 +189,8 @@ func generateClusters(rnd *rand.Rand, conf Configuration) []clusterDef {
 	clusters := make([]clusterDef, conf.Clusters)
 	for cID := 0; cID < conf.Clusters; cID++ {
 		clusters[cID].cID = cID
-		clusters[cID].tags = NewTagsDef(rnd, "cluster", "c", conf.ClusterTags, conf.ClusterTags)
+		clusters[cID].tags = NewTagsDef(rnd,
+			"svc"+strconv.Itoa(cID)+"-", "v", conf.ClusterTags, conf.ClusterTags)
 		if glog.V(2) {
 			glog.Info("Cluster ", cID, " tags=", clusters[cID].tags.tags)
 		}
@@ -221,8 +220,8 @@ func generateTags(rnd *rand.Rand, namePrefix, valuePrefix string, numTags int) T
 	}
 	tagsCache := make(map[uint64]string)
 	valuesCache := make(map[uint64]string)
-	tagsGen := rand.NewZipf(rnd, 1.2, 1.1, uint64(numTags-1))
-	valuesGen := rand.NewZipf(rnd, 1.1, 1.1, uint64(numTags-1))
+	tagsGen := rand.NewZipf(rnd, 1.3, 1.1, uint64(numTags-1))
+	valuesGen := rand.NewZipf(rnd, 1.3, 1.1, uint64(numTags-1))
 	tags := make(Tags, 0, numTags)
 	tagsToGo := numTags
 	for tagsToGo > 0 {
