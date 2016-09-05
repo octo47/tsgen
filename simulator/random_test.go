@@ -1,36 +1,28 @@
-package tsgen
+package simulator
 
 import (
 	"math/rand"
 	"sort"
 
 	"github.com/golang/glog"
-
-	. "gopkg.in/check.v1"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-type SimulatorSuite struct {
-	tags []Tag
-	rnd  *rand.Rand
-}
+type SimulatorSuite struct{}
 
-var _ = Suite(&SimulatorSuite{
-	rnd:  rand.New(rand.NewSource(1)),
-	tags: []Tag{Tag{"tag1", "value1"}, Tag{"tag2", "value2"}},
-})
-
-func (s *SimulatorSuite) TestSimulatorTick(c *C) {
+func TestSimulatorTick(t *testing.T) {
 	rnd := rand.New(rand.NewSource(1))
-	conf := NewConfiguration(3, 5)
+	conf := NewConfiguration(3, 5, 1)
 	simulator := NewSimulator(rnd, conf, 0)
-	c.Assert(len(simulator.machines), Equals, 3)
+	assert.Equal(t, len(simulator.machines), 3)
 	glog.Info(simulator.machines)
 	simulator.Run(0, 1, 1600, func(tp *[]TaggedPoints) {
 		// nothing to do
 	})
 }
 
-func (s *SimulatorSuite) TestDeduplicate(c *C) {
+func TestDeduplicate(t *testing.T) {
 	tags := Tags{
 		Tag{"tag1", "value1"}, Tag{"tag2", "value2"},
 		Tag{"tag2", "value1"}, Tag{"tag1", "value1"},
@@ -40,14 +32,14 @@ func (s *SimulatorSuite) TestDeduplicate(c *C) {
 	dupes := make(map[Tag]bool)
 	for ti := range tags {
 		_, ok := dupes[tags[ti]]
-		c.Assert(ok, Equals, false)
+		assert.False(t, ok)
 		dupes[tags[ti]] = true
 	}
 }
 
-func (s *SimulatorSuite) BenchmarkSimulator(c *C) {
+func BenchmarkSimulator(b *testing.B) {
 	rnd := rand.New(rand.NewSource(1))
-	conf := NewConfiguration(c.N, 1000)
+	conf := NewConfiguration(b.N, 1000, 1)
 	simulator := NewSimulator(rnd, conf, 0)
 	simulator.Run(0, 1, 1600, func(tp *[]TaggedPoints) {
 		// nothing to do
