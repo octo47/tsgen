@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/octo47/tsgen"
+	"github.com/octo47/tsgen/simulator"
 )
 
 var parallel = flag.Int("parallel", 1, "parallelize generation")
@@ -46,8 +46,8 @@ func main() {
 		startTs = uint64(time.Now().Unix())
 	}
 	rnd := rand.New(rand.NewSource(*seed))
-	conf := tsgen.NewConfiguration(*machines, *metrics, *clusters)
-	sim := tsgen.NewSimulator(rnd, conf, startTs)
+	conf := simulator.NewConfiguration(*machines, *metrics, *clusters)
+	sim := simulator.NewSimulator(rnd, conf, startTs)
 	if *nogen {
 		return
 	}
@@ -73,10 +73,10 @@ func main() {
 	wg.Wait()
 }
 
-func runShard(sim *tsgen.Simulator, shard int, wg *sync.WaitGroup, exit *int32) {
+func runShard(sim *simulator.Simulator, shard int, wg *sync.WaitGroup, exit *int32) {
 	defer wg.Done()
 	for atomic.LoadInt32(exit) != 1 {
-		sim.Run(shard, *parallel, *pollPeriod, func(tp *[]tsgen.TaggedPoints) {
+		sim.Run(shard, *parallel, *pollPeriod, func(tp *[]simulator.TaggedPoints) {
 			for i := range *tp {
 				tagstr := (*tp)[i].Tags.FormatSeparated(' ')
 				for _, point := range *(*tp)[i].Datapoints {

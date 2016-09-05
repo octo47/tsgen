@@ -1,4 +1,4 @@
-package tsgen
+package simulator
 
 import (
 	"bytes"
