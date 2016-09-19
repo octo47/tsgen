@@ -136,8 +136,8 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 
 // Run simulator for specified runFor time uints (whatever you use timestamp for, usually seconds)
 // Callback will get tagged points usable to be sent to monitoring systems
-func (s *Simulator) Run(shard int, shardCount int, runFor uint64, cb func(points *[]TaggedPoints)) {
-	s.currentTime += runFor
+func (s *Simulator) Run(shard int, shardCount int, runTo int64, cb func(points *[]TaggedPoints)) {
+	s.currentTime = uint64(runTo)
 	for i := shard; i < len(s.machines); i += shardCount {
 		tick := s.machines[i].Tick(s.currentTime)
 		if len(*tick) > 0 {
