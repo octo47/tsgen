@@ -116,6 +116,9 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 		for i := 0; i < metricsCount; i++ {
 			metricsSelected[rnd.Intn(conf.MaxMetrics-conf.BaseMetrics)+conf.BaseMetrics] = true
 		}
+		if glog.V(2) {
+			glog.Info("Machine ", machineName, " selected ", metricsSelected)
+		}
 		for metric := range metricsSelected {
 			gen, name := metrics[metric].genMaker()
 			selectedTags := metrics[metric].tags.selectTags(conf.TagsPerMetric)
@@ -278,6 +281,7 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 			metrics[i].tags = NewTagsDef(rnd, "mtag", "mv",
 				conf.TagsPerMetric, tagsCount/2)
 		}
+		metricID := i
 		metrics[i].genMaker = func() (generator.Generator, string) {
 			genNum := genNum
 			scale := scale
@@ -297,7 +301,7 @@ func generateMetrics(rnd *rand.Rand, conf Configuration) []metricDef {
 				gen = generator.NewRandomWalkGenerator(rnd, 1.0, 0.0, 100)
 				metricPrefix = "metricR"
 			}
-			return generator.NewScalingGenerator(gen, scale), genName(metricPrefix, i)
+			return generator.NewScalingGenerator(gen, scale), genName(metricPrefix, metricID)
 		}
 	}
 	return metrics

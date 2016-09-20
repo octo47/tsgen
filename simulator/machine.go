@@ -143,13 +143,13 @@ func (tags *Tags) FormatSeparated(separator rune) string {
 	sep := false
 	for i := range *tags {
 		if sep {
-			buf.WriteRune(separator)
+			_, _ = buf.WriteRune(separator)
 		} else {
 			sep = true
 		}
-		buf.WriteString((*tags)[i].Name)
-		buf.WriteRune('=')
-		buf.WriteString((*tags)[i].Value)
+		_, _ = buf.WriteString((*tags)[i].Name)
+		_, _ = buf.WriteRune('=')
+		_, _ = buf.WriteString((*tags)[i].Value)
 	}
 	return buf.String()
 }
