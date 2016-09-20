@@ -119,7 +119,9 @@ func NewSimulator(rnd *rand.Rand, conf Configuration, startTime uint64) *Simulat
 		for metric := range metricsSelected {
 			gen, name := metrics[metric].genMaker()
 			selectedTags := metrics[metric].tags.selectTags(conf.TagsPerMetric)
-			glog.Info("Machine ", machineName, " adding metric ", metrics[metric])
+			if glog.V(2) {
+				glog.Info("Machine ", machineName, " adding metric ", metrics[metric])
+			}
 			machines[machine].AddTimeseriesWithTags(
 				metrics[metric].namespace,
 				name,
